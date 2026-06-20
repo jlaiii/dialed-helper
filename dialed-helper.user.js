@@ -1,14 +1,16 @@
 // ==UserScript==
-// @name         Dialed.gg Color Helper
-// @namespace    https://github.com/jlaiii/cli-launchers
-// @version      2.0.0
-// @description  Auto-capture colors and optionally auto-play rounds on dialed.gg
+// @name         Dialed.gg Helper
+// @namespace    https://github.com/jlaiii/dialed-helper
+// @version      2.1.0
+// @description  Auto-capture colors and auto-play rounds on dialed.gg with adjustable accuracy modes
 // @author       jlaiii
 // @match        https://dialed.gg/*
 // @match        https://www.dialed.gg/*
 // @icon         https://dialed.gg/favicon.ico
 // @grant        none
 // @run-at       document-end
+// @downloadURL  https://raw.githubusercontent.com/jlaiii/dialed-helper/main/dialed-helper.user.js
+// @updateURL    https://raw.githubusercontent.com/jlaiii/dialed-helper/main/dialed-helper.user.js
 // ==/UserScript==
 
 (function () {
