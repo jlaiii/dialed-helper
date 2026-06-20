@@ -46,7 +46,8 @@ All game modes on [dialed.gg](https://dialed.gg) will be supported:
 
 | Game | Status | Plan |
 |---|---|---|
-| **Color** | ✅ Supported | Auto-capture + auto-solve + accuracy modes |
+| **Color** | ✅ Supported | Auto-capture + auto-solve HSB sliders + accuracy modes |
+| **Color2** | 🔜 Planned | Auto-detect character/logo, auto-select correct colors from palette |
 | **Sound** | 🔜 Planned | Auto-detect pitch/frequency, auto-match tone |
 | **Time** | 🔜 Planned | Auto-detect countdown/timer patterns, auto-recall |
 | **Shape** | 🔜 Planned | Auto-detect geometric shape parameters, auto-recreate |
