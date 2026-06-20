@@ -308,22 +308,10 @@
     }
   }
 
-  var updateUIPending = false;
-  var updateUITimer = null;
-
   function updateUI() {
-    if (updateUIPending) return;
-    updateUIPending = true;
-    if (updateUITimer) clearTimeout(updateUITimer);
-    updateUITimer = setTimeout(doUpdateUI, 150);
-  }
-
-  function doUpdateUI() {
-    updateUIPending = false;
-    updateUITimer = null;
-    const swabs = $("dh-swabs");
-    const values = $("dh-values");
-    const toggle = $("dh-toggle");
+    var swabs = $("dh-swabs");
+    var values = $("dh-values");
+    var toggle = $("dh-toggle");
     if (!swabs || !values) return;
 
     swabs.innerHTML = "";
@@ -347,7 +335,7 @@
           }
           div.title = "Round " + i + " - Click to copy hex";
         }
-        const num = document.createElement("span");
+        var num = document.createElement("span");
         num.className = "rn";
         num.textContent = i;
         div.appendChild(num);
@@ -871,16 +859,15 @@
   }
 
   function resetOnNewGame() {
-    const observer = new MutationObserver((mutations) => {
-      for (const m of mutations) {
-        for (const node of m.addedNodes) {
+    var observer = new MutationObserver(function(mutations) {
+      for (var mi = 0; mi < mutations.length; mi++) {
+        var m = mutations[mi];
+        for (var ni = 0; ni < m.addedNodes.length; ni++) {
+          var node = m.addedNodes[ni];
           if (node.nodeType !== Node.ELEMENT_NODE) continue;
           if (
             node.matches &&
-            (node.matches('[class*="IntroScreen"]') ||
-              node.matches('[class*="TotalScreen"]') ||
-              node.matches('[class*="MultiResultScreen"]') ||
-              node.matches('[class*="DailyResultsScreen"]'))
+            node.matches('[class*="IntroScreen"]')
           ) {
             capturedColors = [];
             currentRound = 0;
