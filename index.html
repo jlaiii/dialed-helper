@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dialed Helper — Smart Auto-Solve for dialed.gg</title>
-    <meta name="description" content="A Tampermonkey userscript that auto-captures colors and plays dialed.gg with adjustable accuracy modes — Perfect, Pro, or Good. Support for Color, Color2, Sound, Time, and Shape coming.">
+    <meta name="description" content="Tampermonkey userscript that auto-captures colors and plays dialed.gg with adjustable accuracy modes. Live demo included.">
     <meta property="og:title" content="Dialed Helper — Smart Auto-Solve for dialed.gg">
-    <meta property="og:description" content="Auto-capture colors, auto-play rounds, adjustable accuracy modes. Tampermonkey userscript for dialed.gg.">
+    <meta property="og:description" content="Auto-capture colors, auto-play rounds, adjustable accuracy. Live demo on site.">
     <meta property="og:url" content="https://jlaiii.github.io/dialed-helper/">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://opengraph.githubassets.com/1/jlaiii/dialed-helper">
@@ -14,338 +14,408 @@
     <meta name="theme-color" content="#0d1117">
     <style>
         :root {
-            --bg: #0d1117;
-            --surface: rgba(22, 27, 34, 0.8);
-            --border: rgba(48, 54, 61, 0.6);
-            --text: #c9d1d9;
-            --text-muted: #8b949e;
-            --accent: #58a6ff;
-            --accent-glow: rgba(88, 166, 255, 0.3);
-            --green: #2ea043;
-            --green-dim: rgba(46, 160, 67, 0.15);
-            --amber: #d29922;
-            --amber-dim: rgba(210, 153, 34, 0.15);
+            --bg: #0a0c10; --surface: rgba(16,20,28,0.85);
+            --border: rgba(55,62,71,0.5); --text: #c9d1d9;
+            --muted: #8b949e; --accent: #58a6ff;
+            --green: #2ea043; --amber: #d29922;
             --heading: #f0f6fc;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            overflow-x: hidden;
+        *{margin:0;padding:0;box-sizing:border-box}
+        html{scroll-behavior:smooth}
+        body{
+            font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+            background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden;
         }
-        canvas#bg {
-            position: fixed; inset: 0; width: 100%; height: 100%;
-            z-index: 0; pointer-events: none;
+        canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+        .container{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:0 24px}
+
+        /* hero */
+        .hero{display:flex;align-items:center;justify-content:space-between;gap:40px;padding:70px 0 50px;animation:fadeUp .7s ease-out both}
+        .hero-text{flex:1;min-width:0}
+        .hero-text h1{font-size:3rem;font-weight:800;letter-spacing:-.03em;color:var(--heading);margin-bottom:14px;line-height:1.1}
+        .hero-text h1 .grad{background:linear-gradient(135deg,#58a6ff,#a371f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .hero-text p{font-size:1.1rem;color:var(--muted);max-width:460px;margin-bottom:24px;line-height:1.55}
+        .hero-badges{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+        .hero-badges span{font-size:.78rem;font-weight:600;padding:5px 12px;border-radius:999px;border:1px solid}
+        .badge-done{background:rgba(46,160,67,.13);color:var(--green);border-color:rgba(46,160,67,.25)}
+        .badge-soon{background:rgba(210,153,34,.13);color:var(--amber);border-color:rgba(210,153,34,.25)}
+        .badge-info{background:rgba(88,166,255,.1);color:var(--accent);border-color:rgba(88,166,255,.2)}
+        .btn{
+            display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:11px;
+            font-weight:700;font-size:.95rem;text-decoration:none;cursor:pointer;transition:all .2s;border:none;
         }
-        .container {
-            position: relative; z-index: 1; max-width: 900px;
-            margin: 0 auto; padding: 0 24px;
+        .btn-primary{background:var(--green);color:#fff;box-shadow:0 4px 18px rgba(46,160,67,.3)}
+        .btn-primary:hover{background:#3fb950;transform:translateY(-2px);box-shadow:0 6px 24px rgba(46,160,67,.4)}
+        .btn-ghost{background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--border)}
+        .btn-ghost:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)}
+        .btn svg{width:18px;height:18px;fill:currentColor;flex-shrink:0}
+
+        /* simulator */
+        .sim{background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:40px;animation:fadeUp .85s ease-out .1s both;position:relative;overflow:hidden}
+        .sim::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(88,166,255,.4),transparent)}
+        .sim-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+        .sim-header h2{font-size:1.1rem;font-weight:700;color:var(--heading);display:flex;align-items:center;gap:8px}
+        .sim-header h2 .live-dot{width:8px;height:8px;border-radius:50%;background:#2ea043;animation:pulse 1.5s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+        .sim-round{font-size:.8rem;color:var(--muted);background:rgba(255,255,255,.04);padding:4px 12px;border-radius:999px;border:1px solid var(--border)}
+        .sim-stage{display:flex;flex-direction:column;align-items:center;gap:18px}
+        .sim-countdown{
+            width:100%;max-width:320px;aspect-ratio:1;border-radius:16px;border:1px solid var(--border);
+            display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;
+            transition:background-color .5s;position:relative;overflow:hidden;
         }
-        header {
-            text-align: center; padding: 80px 20px 50px;
-            animation: fadeUp 0.8s ease-out both;
+        .sim-countdown .round-label{font-size:.82rem;font-weight:600;color:rgba(255,255,255,.6);position:absolute;top:14px;z-index:1}
+        .sim-countdown .hex-label{font-size:1.4rem;font-weight:700;font-family:"SFMono-Regular",Consolas,monospace;color:#fff;z-index:1;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+        .sim-countdown .watermark{position:absolute;bottom:10px;font-size:.7rem;color:rgba(255,255,255,.3);z-index:1}
+        .sim-blink{animation:blink .4s ease-out}
+        @keyframes blink{0%{opacity:0;transform:scale(.95)}50%{opacity:.6}100%{opacity:1;transform:scale(1)}}
+        .sim-sliders{
+            width:100%;max-width:320px;display:flex;gap:8px;padding:12px;
+            background:rgba(0,0,0,.3);border-radius:14px;border:1px solid var(--border);
         }
-        header h1 {
-            font-size: 2.8rem; font-weight: 800; letter-spacing: -0.03em;
-            color: var(--heading); margin-bottom: 14px;
-            background: linear-gradient(135deg, #58a6ff 0%, #a371f7 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .sim-slider-track{
+            flex:1;height:120px;border-radius:8px;position:relative;cursor:pointer;overflow:hidden;
+            border:1px solid rgba(255,255,255,.1);
         }
-        header p.subtitle {
-            font-size: 1.2rem; color: var(--text); max-width: 580px;
-            margin: 0 auto 12px; line-height: 1.5; font-weight: 500;
+        .sim-slider-handle{
+            position:absolute;left:2px;right:2px;height:14px;border-radius:7px;
+            background:rgba(255,255,255,.9);border:2px solid rgba(0,0,0,.3);
+            box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:2;transition:top .6s cubic-bezier(.22,1,.36,1);
         }
-        header p.desc {
-            font-size: 0.95rem; color: var(--text-muted);
-            max-width: 520px; margin: 0 auto 28px; line-height: 1.55;
+        .sim-slider-label{text-align:center;font-size:.65rem;font-weight:600;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:.04em}
+        .sim-score{
+            font-size:2rem;font-weight:800;color:var(--heading);
+            opacity:0;transform:translateY(10px);transition:all .4s ease-out;
         }
-        .badge-row {
-            display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
-            margin-bottom: 28px;
+        .sim-score.show{opacity:1;transform:translateY(0)}
+        .sim-score .pts{color:var(--accent)}
+        .sim-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;justify-content:center}
+        .sim-ctrl{
+            padding:7px 16px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;
+            border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text);
+            transition:all .15s;font-family:inherit;
         }
-        .badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 14px; border-radius: 999px;
-            font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em;
-            border: 1px solid;
-        }
-        .badge.green { background: var(--green-dim); color: var(--green); border-color: rgba(46, 160, 67, 0.3); }
-        .badge.amber { background: var(--amber-dim); color: var(--amber); border-color: rgba(210, 153, 34, 0.3); }
-        .badge.blue  { background: rgba(88, 166, 255, 0.12); color: var(--accent); border-color: rgba(88, 166, 255, 0.25); }
-        .install-btn {
-            display: inline-flex; align-items: center; gap: 10px;
-            background: var(--green); color: #fff; text-decoration: none;
-            padding: 14px 28px; border-radius: 12px; font-weight: 700;
-            font-size: 1.05rem; transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 18px rgba(46, 160, 67, 0.3);
-        }
-        .install-btn:hover {
-            background: #3fb950; transform: translateY(-2px);
-            box-shadow: 0 6px 24px rgba(46, 160, 67, 0.4);
-        }
-        .install-btn svg { width: 20px; height: 20px; fill: currentColor; }
-        .section {
-            background: var(--surface); backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border);
-            border-radius: 16px; padding: 32px; margin: 32px 0;
-            animation: fadeUp 0.9s ease-out 0.15s both;
-        }
-        .section h2 {
-            color: var(--heading); font-size: 1.3rem; font-weight: 700;
-            margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
-        }
-        .section h3 {
-            color: var(--heading); font-size: 1.05rem; font-weight: 600;
-            margin: 20px 0 10px;
-        }
-        .section p { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 10px; line-height: 1.6; }
-        .section code {
-            background: rgba(13, 17, 23, 0.85); padding: 2px 8px;
-            border-radius: 5px; border: 1px solid var(--border);
-            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-            font-size: 0.85em; color: var(--accent);
-        }
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 16px; margin-top: 16px;
-        }
-        .feature {
-            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
-            border-radius: 10px; padding: 18px;
-            transition: border-color 0.2s, transform 0.2s;
-        }
-        .feature:hover { border-color: rgba(88,166,255,0.3); transform: translateY(-2px); }
-        .feature .icon { font-size: 1.2rem; margin-bottom: 6px; }
-        .feature h4 { color: var(--accent); font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
-        .feature p { color: var(--text-muted); font-size: 0.82rem; margin: 0; }
-        table {
-            width: 100%; border-collapse: collapse; margin-top: 12px;
-            font-size: 0.88rem;
-        }
-        th, td {
-            text-align: left; padding: 10px 14px;
-            border-bottom: 1px solid var(--border);
-        }
-        th { color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
-        td { color: var(--text); }
-        td.muted { color: var(--text-muted); }
-        .status-done { color: var(--green); font-weight: 600; }
-        .status-planned { color: var(--amber); font-weight: 600; }
-        .key {
-            display: inline-block; background: rgba(13, 17, 23, 0.7);
-            border: 1px solid var(--border); border-radius: 4px;
-            padding: 2px 7px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-            font-size: 0.85em; color: var(--text); margin: 0 2px;
-        }
-        footer {
-            text-align: center; padding: 40px 20px 60px;
-            color: #484f58; font-size: 0.85rem; position: relative; z-index: 1;
-        }
-        footer a { color: var(--accent); text-decoration: none; }
-        footer a:hover { color: #79c0ff; text-decoration: underline; }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @media (max-width: 640px) {
-            header h1 { font-size: 2rem; }
-            header { padding-top: 50px; }
+        .sim-ctrl:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)}
+        .sim-ctrl.active{background:rgba(210,153,34,.18);color:var(--amber);border-color:rgba(210,153,34,.4)}
+        .sim-ctrl.play{background:rgba(46,160,67,.18);color:var(--green);border-color:rgba(46,160,67,.35);font-size:.85rem;padding:8px 24px}
+        .sim-ctrl.play:hover{background:rgba(46,160,67,.28)}
+
+        /* sections */
+        .section{background:var(--surface);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:16px;padding:30px;margin:28px 0;animation:fadeUp .9s ease-out .15s both}
+        .section h2{color:var(--heading);font-size:1.2rem;font-weight:700;margin-bottom:14px}
+        .section h3{color:var(--heading);font-size:1rem;font-weight:600;margin:18px 0 8px}
+        .section p{color:var(--muted);font-size:.9rem;margin-bottom:8px;line-height:1.6}
+        .section code{background:rgba(13,17,23,.85);padding:2px 8px;border-radius:5px;border:1px solid var(--border);font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:.85em;color:var(--accent)}
+        .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:12px}
+        .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px}
+        .card{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:18px;transition:border-color .2s,transform .2s}
+        .card:hover{border-color:rgba(88,166,255,.3);transform:translateY(-2px)}
+        .card h4{color:var(--accent);font-size:.88rem;font-weight:600;margin-bottom:4px}
+        .card p{color:var(--muted);font-size:.8rem;margin:0}
+        table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.85rem}
+        th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border)}
+        th{color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+        td{color:var(--text)}
+        td.mu{color:var(--muted)}
+        .st-done{color:var(--green);font-weight:600}
+        .st-soon{color:var(--amber);font-weight:600}
+        .kbd{display:inline-block;background:rgba(13,17,23,.7);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-family:"SFMono-Regular",Consolas,monospace;font-size:.82em;color:var(--text);margin:0 2px}
+
+        /* stats row */
+        .stats{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin:40px 0 28px;animation:fadeUp .95s ease-out .2s both}
+        .stat{text-align:center;min-width:100px}
+        .stat .num{font-size:2rem;font-weight:800;color:var(--heading)}
+        .stat .lbl{font-size:.75rem;color:var(--muted);margin-top:2px}
+
+        footer{text-align:center;padding:40px 20px 60px;color:#484f58;font-size:.82rem;position:relative;z-index:1}
+        footer a{color:var(--accent);text-decoration:none}
+        footer a:hover{color:#79c0ff;text-decoration:underline}
+
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @media(max-width:800px){
+            .hero{flex-direction:column;text-align:center;padding:44px 0 30px}
+            .hero-text h1{font-size:2.2rem}
+            .hero-badges{justify-content:center}
         }
     </style>
 </head>
 <body>
     <canvas id="bg"></canvas>
     <div class="container">
-        <header>
-            <h1>Dialed Helper</h1>
-            <p class="subtitle">Auto-captures colors and plays rounds on dialed.gg with adjustable accuracy so your score stays believable.</p>
-            <p class="desc">A Tampermonkey userscript. One click to install. Works on Color mode with Perfect, Pro, and Good accuracy levels.</p>
-            <div class="badge-row">
-                <span class="badge green">&#9670; Color Supported</span>
-                <span class="badge amber">&#9670; Color2 Planned</span>
-                <span class="badge blue">&#9670; Sound / Time / Shape</span>
+        <!-- hero -->
+        <div class="hero">
+            <div class="hero-text">
+                <h1>Dialed <span class="grad">Helper</span></h1>
+                <p>Auto-captures colors and plays rounds on dialed.gg with adjustable accuracy. Set your sliders to the exact target, or let it auto-solve &mdash; your scores stay believable.</p>
+                <div class="hero-badges">
+                    <span class="badge-done">Color Supported</span>
+                    <span class="badge-soon">Color2 Planned</span>
+                    <span class="badge-info">Sound / Time / Shape</span>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <a class="btn btn-primary" href="https://raw.githubusercontent.com/jlaiii/dialed-helper/main/dialed-helper.user.js">
+                        <svg viewBox="0 0 16 16"><path d="M8.47 10.78a.75.75 0 0 1-1.06 0L3.22 6.53a.75.75 0 0 1 1.06-1.06L7.5 8.69V1.75a.75.75 0 0 1 1.5 0v6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L8.47 10.78zM1.75 10.5a.75.75 0 0 0 0 1.5h12.5a.75.75 0 0 0 0-1.5H1.75z"/></svg>
+                        Install Userscript
+                    </a>
+                    <a class="btn btn-ghost" href="https://github.com/jlaiii/dialed-helper">
+                        <svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+                        GitHub
+                    </a>
+                </div>
             </div>
-            <a class="install-btn" href="https://raw.githubusercontent.com/jlaiii/dialed-helper/main/dialed-helper.user.js">
-                <svg viewBox="0 0 16 16"><path d="M8.47 10.78a.75.75 0 0 1-1.06 0L3.22 6.53a.75.75 0 0 1 1.06-1.06L7.5 8.69V1.75a.75.75 0 0 1 1.5 0v6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L8.47 10.78zM1.75 10.5a.75.75 0 0 0 0 1.5h12.5a.75.75 0 0 0 0-1.5H1.75z"/></svg>
-                Install Userscript
-            </a>
-        </header>
+        </div>
 
+        <!-- stats -->
+        <div class="stats">
+            <div class="stat"><div class="num" id="stat-rounds">0</div><div class="lbl">Demo Rounds Run</div></div>
+            <div class="stat"><div class="num" id="stat-avg">--</div><div class="lbl">Avg Score /10</div></div>
+            <div class="stat"><div class="num" style="color:var(--accent)">3</div><div class="lbl">Accuracy Modes</div></div>
+            <div class="stat"><div class="num" style="color:var(--green)">5</div><div class="lbl">Games Planned</div></div>
+        </div>
+
+        <!-- live demo simulator -->
+        <div class="sim">
+            <div class="sim-header">
+                <h2><span class="live-dot"></span>Live Simulator</h2>
+                <span class="sim-round" id="sim-round">Round 1 / 5</span>
+            </div>
+            <div class="sim-stage">
+                <div class="sim-countdown" id="sim-countdown" style="background-color:#1a1a2e">
+                    <span class="round-label" id="sim-round-label">Memorize</span>
+                    <span class="hex-label" id="sim-hex">#1A1A2E</span>
+                    <span class="watermark">Dialed.gg</span>
+                </div>
+                <div class="sim-sliders" id="sim-sliders">
+                    <div style="flex:1;text-align:center">
+                        <div class="sim-slider-track" id="sim-track-h" style="background:linear-gradient(to bottom,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)"><div class="sim-slider-handle" id="sim-handle-h" style="top:50%"></div></div>
+                        <div class="sim-slider-label">Hue</div>
+                    </div>
+                    <div style="flex:1;text-align:center">
+                        <div class="sim-slider-track" id="sim-track-s" style="background:linear-gradient(to bottom,#808080,#ccc)"><div class="sim-slider-handle" id="sim-handle-s" style="top:50%"></div></div>
+                        <div class="sim-slider-label">Sat</div>
+                    </div>
+                    <div style="flex:1;text-align:center">
+                        <div class="sim-slider-track" id="sim-track-b" style="background:linear-gradient(to bottom,#000,#888)"><div class="sim-slider-handle" id="sim-handle-b" style="top:50%"></div></div>
+                        <div class="sim-slider-label">Bright</div>
+                    </div>
+                </div>
+                <div class="sim-score" id="sim-score"><span class="pts" id="sim-score-val">--</span> / 10</div>
+                <div class="sim-controls">
+                    <button class="sim-ctrl active" data-mode="perfect">Perfect</button>
+                    <button class="sim-ctrl" data-mode="pro">Pro</button>
+                    <button class="sim-ctrl" data-mode="good">Good</button>
+                    <button class="sim-ctrl play" id="sim-play">&#9654; Run Demo Round</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- install -->
         <div class="section">
             <h2>Installation</h2>
-            <p>1. Install <a href="https://www.tampermonkey.net/" style="color:#58a6ff">Tampermonkey</a> or <a href="https://violentmonkey.github.io/" style="color:#58a6ff">Violentmonkey</a> for your browser</p>
-            <p>2. Click the <strong>Install Userscript</strong> button above — Tampermonkey will detect it</p>
-            <p>3. Go to <a href="https://dialed.gg" style="color:#58a6ff">dialed.gg</a> and play. The helper panel appears in the bottom-right corner.</p>
+            <p>1. Install <a href="https://www.tampermonkey.net/" style="color:var(--accent)">Tampermonkey</a> or <a href="https://violentmonkey.github.io/" style="color:var(--accent)">Violentmonkey</a> for your browser</p>
+            <p>2. Click <strong>Install Userscript</strong> above &mdash; Tampermonkey detects it automatically</p>
+            <p>3. Go to <a href="https://dialed.gg" style="color:var(--accent)">dialed.gg</a> and play. The helper panel appears in the bottom-right.</p>
         </div>
 
+        <!-- features -->
         <div class="section">
             <h2>Features</h2>
-            <div class="feature-grid">
-                <div class="feature">
-                    <div class="icon">&#9670;</div>
-                    <h4>Auto-Capture</h4>
-                    <p>Detects and records colors during the countdown phase automatically.</p>
-                </div>
-                <div class="feature">
-                    <div class="icon">&#9670;</div>
-                    <h4>Set Color</h4>
-                    <p>Moves the HSB sliders to the target without submitting — you press done when ready.</p>
-                </div>
-                <div class="feature">
-                    <div class="icon">&#9670;</div>
-                    <h4>Auto-Solve</h4>
-                    <p>Sets sliders and auto-submits each round. Full hands-free play.</p>
-                </div>
-                <div class="feature">
-                    <div class="icon">&#9670;</div>
-                    <h4>Accuracy Modes</h4>
-                    <p>Perfect, Pro, or Good — adds controlled noise so scores look human.</p>
-                </div>
-                <div class="feature">
-                    <div class="icon">&#9670;</div>
-                    <h4>Color Memory Panel</h4>
-                    <p>Shows captured colors with hex codes and HSB slider values for reference.</p>
-                </div>
-                <div class="feature">
-                    <div class="icon">&#9670;</div>
-                    <h4>Fiber-Level Precision</h4>
-                    <p>Reads exact target values from the game's React state for 100% accuracy.</p>
-                </div>
+            <div class="grid2">
+                <div class="card"><h4>Auto-Capture</h4><p>Detects and records target colors from the countdown screen in real-time.</p></div>
+                <div class="card"><h4>Set Color</h4><p>Moves sliders to target without submitting &mdash; you press done when ready.</p></div>
+                <div class="card"><h4>Auto-Solve</h4><p>Sets sliders and auto-submits each round for full hands-free play.</p></div>
+                <div class="card"><h4>Accuracy Modes</h4><p>Perfect, Pro, or Good &mdash; controlled noise keeps scores believable.</p></div>
+                <div class="card"><h4>Color Memory Panel</h4><p>Shows captured colors with hex codes and HSB values for reference.</p></div>
+                <div class="card"><h4>React Fiber Integration</h4><p>Reads exact target values from the game's internal state for 100% precision.</p></div>
             </div>
         </div>
 
+        <!-- controls -->
         <div class="section">
             <h2>Controls</h2>
             <table>
                 <tr><th>Action</th><th>How</th></tr>
-                <tr><td>Show/hide panel</td><td>Click <span class="key">&#9670;</span> or press <span class="key">Ctrl+`</span></td></tr>
+                <tr><td>Show / hide panel</td><td>Click <span class="kbd">&#9670;</span> or press <span class="kbd">Ctrl+`</span></td></tr>
                 <tr><td>Toggle auto-capture</td><td>Click <strong>Capture</strong> in panel</td></tr>
                 <tr><td>Set sliders without submit</td><td>Click <strong>Set Color</strong></td></tr>
-                <tr><td>Toggle auto-solve</td><td>Click <strong>Auto-Solve</strong> or press <span class="key">Ctrl+S</span></td></tr>
+                <tr><td>Toggle auto-solve</td><td>Click <strong>Auto-Solve</strong> or press <span class="kbd">Ctrl+S</span></td></tr>
                 <tr><td>Change accuracy</td><td>Click <strong>Perfect / Pro / Good</strong></td></tr>
             </table>
         </div>
 
+        <!-- accuracy table -->
         <div class="section">
             <h2>Accuracy Modes</h2>
             <table>
-                <tr><th>Mode</th><th>Hue Noise</th><th>Saturation Noise</th><th>Brightness Noise</th><th>Typical Score</th></tr>
-                <tr><td><strong>Perfect</strong></td><td>None</td><td>None</td><td>None</td><td>10/10</td></tr>
-                <tr><td><strong>Pro</strong></td><td>&plusmn;1&deg;</td><td>&plusmn;1&ndash;2%</td><td>&plusmn;1&ndash;2%</td><td>~9.5&ndash;10/10</td></tr>
-                <tr><td><strong>Good</strong></td><td>&plusmn;4&deg;</td><td>&plusmn;5%</td><td>&plusmn;5%</td><td>~8&ndash;9/10</td></tr>
+                <tr><th>Mode</th><th>Hue Noise</th><th>Sat Noise</th><th>Bright Noise</th><th>Score Range</th></tr>
+                <tr><td><strong>Perfect</strong></td><td>None</td><td>None</td><td>None</td><td>10 / 10</td></tr>
+                <tr><td><strong>Pro</strong></td><td>&plusmn;1&deg;</td><td>&plusmn;1&ndash;2%</td><td>&plusmn;1&ndash;2%</td><td>~9.5&ndash;10</td></tr>
+                <tr><td><strong>Good</strong></td><td>&plusmn;4&deg;</td><td>&plusmn;5%</td><td>&plusmn;5%</td><td>~8&ndash;9</td></tr>
             </table>
         </div>
 
+        <!-- roadmap -->
         <div class="section">
             <h2>Roadmap</h2>
             <table>
                 <tr><th>Game</th><th>Status</th><th>Plan</th></tr>
-                <tr><td><strong>Color</strong></td><td class="status-done">Done</td><td class="muted">Auto-capture + auto-solve HSB sliders + accuracy modes</td></tr>
-                <tr><td><strong>Color2</strong></td><td class="status-planned">Planned</td><td class="muted">Auto-detect character/logo, auto-select correct colors from palette</td></tr>
-                <tr><td><strong>Sound</strong></td><td class="status-planned">Planned</td><td class="muted">Auto-detect pitch/frequency, auto-match tone</td></tr>
-                <tr><td><strong>Time</strong></td><td class="status-planned">Planned</td><td class="muted">Auto-detect countdown/timer patterns, auto-recall</td></tr>
-                <tr><td><strong>Shape</strong></td><td class="status-planned">Planned</td><td class="muted">Auto-detect geometric shape parameters, auto-recreate</td></tr>
+                <tr><td><strong>Color</strong></td><td class="st-done">Done</td><td class="mu">Auto-capture + auto-solve HSB sliders + accuracy modes</td></tr>
+                <tr><td><strong>Color2</strong></td><td class="st-soon">Planned</td><td class="mu">Auto-detect character/logo, auto-select correct palette colors</td></tr>
+                <tr><td><strong>Sound</strong></td><td class="st-soon">Planned</td><td class="mu">Auto-detect pitch/frequency, auto-match tone</td></tr>
+                <tr><td><strong>Time</strong></td><td class="st-soon">Planned</td><td class="mu">Auto-detect countdown/timer patterns, auto-recall</td></tr>
+                <tr><td><strong>Shape</strong></td><td class="st-soon">Planned</td><td class="mu">Auto-detect geometric parameters, auto-recreate</td></tr>
             </table>
         </div>
     </div>
 
     <footer>
-        <p><a href="https://github.com/jlaiii/dialed-helper">GitHub Repo</a> &middot; MIT License</p>
-        <p style="margin-top:6px">Not affiliated with dialed.gg</p>
+        <p><a href="https://github.com/jlaiii/dialed-helper">GitHub</a> &middot; MIT &middot; Not affiliated with dialed.gg</p>
     </footer>
 
     <script>
-        (function() {
-            var canvas = document.getElementById('bg');
-            var ctx = canvas.getContext('2d');
-            var width, height;
-            var particles = [];
-            var mouse = { x: null, y: null, radius: 100 };
-            var count = Math.min(60, Math.floor((window.innerWidth * window.innerHeight) / 22000));
-            var connDist = 90;
-            var maxConn = 3;
+    (function(){
+        // background particles
+        var canvas=document.getElementById('bg'),ctx=canvas.getContext('2d'),w,h,particles=[];
+        var mouse={x:null,y:null,radius:100};
+        var cnt=Math.min(55,Math.floor((innerWidth*innerHeight)/24000));
+        function rs(){w=canvas.width=innerWidth;h=canvas.height=innerHeight}
+        addEventListener('resize',rs);rs();
+        addEventListener('mousemove',function(e){mouse.x=e.clientX;mouse.y=e.clientY});
+        addEventListener('mouseleave',function(){mouse.x=null;mouse.y=null});
+        function P(){this.x=Math.random()*w;this.y=Math.random()*h;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;this.s=Math.random()*1.2+.4;this.a=Math.random()*.3+.1}
+        P.prototype.up=function(){
+            this.x+=this.vx;this.y+=this.vy;
+            if(this.x<0||this.x>w)this.vx*=-1;if(this.y<0||this.y>h)this.vy*=-1;
+            if(mouse.x!=null){var dx=mouse.x-this.x,dy=mouse.y-this.y,dist=Math.sqrt(dx*dx+dy*dy);
+            if(dist<mouse.radius){var f=(mouse.radius-dist)/mouse.radius,a=Math.atan2(dy,dx);this.vx-=Math.cos(a)*f*.012;this.vy-=Math.sin(a)*f*.012}}
+        };
+        P.prototype.dr=function(){ctx.beginPath();ctx.arc(this.x,this.y,this.s,0,Math.PI*2);ctx.fillStyle='rgba(88,166,255,'+this.a+')';ctx.fill()};
+        for(var i=0;i<cnt;i++)particles.push(new P());
+        function anim(){ctx.clearRect(0,0,w,h);
+            for(var i=0;i<particles.length;i++){particles[i].up();particles[i].dr();
+                for(var j=i+1,c=0;j<particles.length&&c<3;j++){var dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);
+                    if(d<85){ctx.beginPath();ctx.strokeStyle='rgba(88,166,255,'+((1-d/85)*.08)+')';ctx.lineWidth=.5;ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();c++}}}
+            requestAnimationFrame(anim)}
+        anim();
 
-            function resize() {
-                width = canvas.width = window.innerWidth;
-                height = canvas.height = window.innerHeight;
+        // simulator
+        var simMode='perfect',simRound=0,totalRounds=5,roundScores=[],simRunning=false;
+        var simCountdown=document.getElementById('sim-countdown');
+        var simHex=document.getElementById('sim-hex');
+        var simRoundLabel=document.getElementById('sim-round-label');
+        var simRoundEl=document.getElementById('sim-round');
+        var simScore=document.getElementById('sim-score');
+        var simScoreVal=document.getElementById('sim-score-val');
+        var handleH=document.getElementById('sim-handle-h');
+        var handleS=document.getElementById('sim-handle-s');
+        var handleB=document.getElementById('sim-handle-b');
+
+        function hsbToRgb(h,s,b){var hf=h/60,sf=s/100,bf=b/100,c=bf*sf,x=c*(1-Math.abs((hf%2)-1)),m=bf-c,rp,gp,bp,hi=Math.floor(hf)%6;
+            if(hi===0){rp=c;gp=x;bp=0}else if(hi===1){rp=x;gp=c;bp=0}else if(hi===2){rp=0;gp=c;bp=x}else if(hi===3){rp=0;gp=x;bp=c}else if(hi===4){rp=x;gp=0;bp=c}else{rp=c;gp=0;bp=x}
+            return{r:Math.round((rp+m)*255),g:Math.round((gp+m)*255),b:Math.round((bp+m)*255)}}
+        function rgbToHex(r,g,b){return'#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1).toUpperCase()}
+        function hexColor(r,g,b){return'rgb('+r+','+g+','+b+')'}
+
+        function randomTarget(){
+            var h=Math.floor(Math.random()*360),s=Math.floor(Math.random()*70)+15,b=Math.floor(Math.random()*60)+25;
+            return{h:h,s:s,b:b};
+        }
+
+        function applyNoise(target,mode){
+            if(mode==='perfect')return{h:target.h,s:target.s,b:target.b};
+            var nh,ns,nb;
+            if(mode==='pro'){nh=(Math.random()-.5)*2;ns=(Math.random()-.5)*3;nb=(Math.random()-.5)*3}
+            else{nh=(Math.random()-.5)*8;ns=(Math.random()-.5)*10;nb=(Math.random()-.5)*10}
+            return{h:Math.max(0,Math.min(360,Math.round(target.h+nh))),s:Math.max(0,Math.min(100,Math.round(target.s+ns))),b:Math.max(0,Math.min(100,Math.round(target.b+nb)))};
+        }
+
+        function calcScore(target,guess){
+            var dH=Math.abs(target.h-guess.h);if(dH>180)dH=360-dH;
+            var dS=Math.abs(target.s-guess.s),dB=Math.abs(target.b-guess.b);
+            var dist=Math.sqrt((dH/360)*(dH/360)+(dS/100)*(dS/100)+(dB/100)*(dB/100));
+            return Math.max(0,Math.round((1-dist/1.1)*10*10)/10);
+        }
+
+        function updateSliders(target){
+            handleH.style.top=(100-(target.h/360*100))+'%';
+            handleS.style.top=(100-target.s)+'%';
+            handleB.style.top=(100-target.b)+'%';
+        }
+
+        function updateTrackGradients(guess){
+            var hueGrad=[],satGrad=[],briGrad=[];
+            for(var i=0;i<=10;i++){
+                var h=(i/10)*360,sh=hsbToRgb(h,guess.s,guess.b);hueGrad.push(hexColor(sh.r,sh.g,sh.b));
+                var ss=hsbToRgb(guess.h,i*10,guess.b);satGrad.push(hexColor(ss.r,ss.g,ss.b));
+                var sb=hsbToRgb(guess.h,guess.s,i*10);briGrad.push(hexColor(sb.r,sb.g,sb.b));
             }
-            window.addEventListener('resize', resize);
-            resize();
+            document.getElementById('sim-track-h').style.background='linear-gradient(to bottom,'+hueGrad.reverse().join(',')+')';
+            document.getElementById('sim-track-s').style.background='linear-gradient(to bottom,'+satGrad.reverse().join(',')+')';
+            document.getElementById('sim-track-b').style.background='linear-gradient(to bottom,'+briGrad.reverse().join(',')+')';
+        }
 
-            window.addEventListener('mousemove', function(e) {
-                mouse.x = e.clientX;
-                mouse.y = e.clientY;
+        async function runDemoRound(){
+            if(simRunning)return;simRunning=true;
+            simRound++;
+            var roundLabel=simRound+' / '+totalRounds;
+            simRoundEl.textContent='Round '+roundLabel;
+            document.getElementById('sim-rounds').textContent=simRound;
+
+            var target=randomTarget();
+            var noisy=applyNoise(target,simMode);
+            var targetRgb=hsbToRgb(target.h,target.s,target.b);
+            var hex=rgbToHex(targetRgb.r,targetRgb.g,targetRgb.b);
+
+            // phase 1: show color briefly
+            simCountdown.style.backgroundColor=hexColor(targetRgb.r,targetRgb.g,targetRgb.b);
+            simHex.textContent=hex;
+            simRoundLabel.textContent='Memorize';
+            simScore.classList.remove('show');
+            updateSliders({h:0,s:50,b:50});
+            updateTrackGradients({h:0,s:50,b:50});
+
+            await sleep(1200);
+
+            // phase 2: blink and transition
+            simRoundLabel.textContent='Recreate';
+            simHex.textContent='???';
+            await sleep(300);
+
+            // phase 3: auto-set sliders
+            updateSliders(noisy);
+            updateTrackGradients(noisy);
+            simHex.textContent=rgbToHex(hsbToRgb(noisy.h,noisy.s,noisy.b).r,hsbToRgb(noisy.h,noisy.s,noisy.b).g,hsbToRgb(noisy.h,noisy.s,noisy.b).b);
+            await sleep(800);
+
+            // phase 4: score
+            var score=calcScore(target,noisy);
+            roundScores.push(score);
+            simScoreVal.textContent=score.toFixed(1);
+            simScore.classList.add('show');
+            simScoreVal.style.color=score>=9.5?'var(--green)':score>=8?'var(--amber)':'#f85149';
+
+            // update stats
+            var avg=roundScores.reduce(function(a,b){return a+b},0)/roundScores.length;
+            document.getElementById('stat-avg').textContent=avg.toFixed(1);
+            document.getElementById('stat-rounds').textContent=simRound;
+
+            await sleep(1500);
+            simRunning=false;
+        }
+
+        function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+
+        // mode buttons
+        var modeBtns=document.querySelectorAll('.sim-ctrl[data-mode]');
+        for(var i=0;i<modeBtns.length;i++){
+            modeBtns[i].addEventListener('click',function(){
+                simMode=this.dataset.mode;
+                for(var j=0;j<modeBtns.length;j++)modeBtns[j].classList.toggle('active',modeBtns[j].dataset.mode===simMode);
             });
-            window.addEventListener('mouseleave', function() {
-                mouse.x = null;
-                mouse.y = null;
-            });
+        }
 
-            function Particle() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.vx = (Math.random() - 0.5) * 0.35;
-                this.vy = (Math.random() - 0.5) * 0.35;
-                this.size = Math.random() * 1.3 + 0.4;
-                this.alpha = Math.random() * 0.35 + 0.12;
-            }
-            Particle.prototype.update = function() {
-                this.x += this.vx;
-                this.y += this.vy;
-                if (this.x < 0 || this.x > width) this.vx *= -1;
-                if (this.y < 0 || this.y > height) this.vy *= -1;
-                if (mouse.x != null) {
-                    var dx = mouse.x - this.x;
-                    var dy = mouse.y - this.y;
-                    var dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist < mouse.radius) {
-                        var force = (mouse.radius - dist) / mouse.radius;
-                        var angle = Math.atan2(dy, dx);
-                        this.vx -= Math.cos(angle) * force * 0.015;
-                        this.vy -= Math.sin(angle) * force * 0.015;
-                    }
-                }
-            };
-            Particle.prototype.draw = function() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(88,166,255,' + this.alpha + ')';
-                ctx.fill();
-            };
-
-            for (var i = 0; i < count; i++) particles.push(new Particle());
-
-            function animate() {
-                ctx.clearRect(0, 0, width, height);
-                for (var i = 0; i < particles.length; i++) {
-                    particles[i].update();
-                    particles[i].draw();
-                    var conns = 0;
-                    for (var j = i + 1; j < particles.length; j++) {
-                        var dx = particles[i].x - particles[j].x;
-                        var dy = particles[i].y - particles[j].y;
-                        var dist = Math.sqrt(dx*dx + dy*dy);
-                        if (dist < connDist && conns < maxConn) {
-                            var a = (1 - dist / connDist) * 0.1;
-                            ctx.beginPath();
-                            ctx.strokeStyle = 'rgba(88,166,255,' + a + ')';
-                            ctx.lineWidth = 0.5;
-                            ctx.moveTo(particles[i].x, particles[i].y);
-                            ctx.lineTo(particles[j].x, particles[j].y);
-                            ctx.stroke();
-                            conns++;
-                        }
-                    }
-                }
-                requestAnimationFrame(animate);
-            }
-            animate();
-        })();
+        document.getElementById('sim-play').addEventListener('click',runDemoRound);
+    })();
     </script>
 </body>
 </html>
