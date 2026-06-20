@@ -38,8 +38,8 @@ Currently supports the **Color** game with full auto-solve and adjustable accura
 | Mode | Noise (H/S/B) | Typical Score |
 |---|---|---|
 | **Perfect** | None | 10/10 |
-| **Pro** | ±1° / ±1-2% / ±1-2% | ~9.5-10/10 |
-| **Good** | ±4° / ±5% / ±5% | ~8-9/10 |
+| **Pro** | ±7° / ±10% / ±10% | ~9.0-9.7/10 |
+| **Good** | ±15° / ±20% / ±20% | ~8.0-9.0/10 |
 
 ## Roadmap
 

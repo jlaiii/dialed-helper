@@ -584,13 +584,13 @@
 
     var noiseH, noiseS, noiseB;
     if (mode === "pro") {
-      noiseH = (Math.random() - 0.5) * 2;
-      noiseS = (Math.random() - 0.5) * 3;
-      noiseB = (Math.random() - 0.5) * 3;
+      noiseH = (Math.random() - 0.5) * 14;
+      noiseS = (Math.random() - 0.5) * 20;
+      noiseB = (Math.random() - 0.5) * 20;
     } else {
-      noiseH = (Math.random() - 0.5) * 8;
-      noiseS = (Math.random() - 0.5) * 10;
-      noiseB = (Math.random() - 0.5) * 10;
+      noiseH = (Math.random() - 0.5) * 30;
+      noiseS = (Math.random() - 0.5) * 40;
+      noiseB = (Math.random() - 0.5) * 40;
     }
 
     return {
