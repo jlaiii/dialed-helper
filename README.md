@@ -2,6 +2,8 @@
 
 A [Tampermonkey](https://www.tampermonkey.net/) / [Violentmonkey](https://violentmonkey.github.io/) userscript that helps you play games on [dialed.gg](https://dialed.gg).
 
+**[Website & Docs](https://jlaiii.github.io/dialed-helper/)** · **[Install Userscript](https://raw.githubusercontent.com/jlaiii/dialed-helper/main/dialed-helper.user.js)**
+
 Currently supports the **Color** game with full auto-solve and adjustable accuracy modes so your score looks human.
 
 ## Features
