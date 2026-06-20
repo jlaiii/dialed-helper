@@ -125,7 +125,6 @@
         <button data-mode="perfect" title="Exact match, perfect 10/10">Perfect</button>
         <button data-mode="pro" title="Tiny errors, ~9-10/10">Pro</button>
         <button data-mode="good" title="Moderate errors, ~8-9/10">Good</button>
-        <button data-mode="human" title="Natural errors, ~6-8/10">Human</button>
       </div>
     `;
     document.body.appendChild(panel);
@@ -600,14 +599,10 @@
       noiseH = (Math.random() - 0.5) * 2;
       noiseS = (Math.random() - 0.5) * 3;
       noiseB = (Math.random() - 0.5) * 3;
-    } else if (mode === "good") {
+    } else {
       noiseH = (Math.random() - 0.5) * 8;
       noiseS = (Math.random() - 0.5) * 10;
       noiseB = (Math.random() - 0.5) * 10;
-    } else {
-      noiseH = (Math.random() - 0.5) * 16;
-      noiseS = (Math.random() - 0.5) * 20;
-      noiseB = (Math.random() - 0.5) * 20;
     }
 
     return {

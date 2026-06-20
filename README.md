@@ -38,7 +38,6 @@ Currently supports the **Color** game with full auto-solve and adjustable accura
 | **Perfect** | None | 10/10 |
 | **Pro** | ±1° / ±1-2% / ±1-2% | ~9.5-10/10 |
 | **Good** | ±4° / ±5% / ±5% | ~8-9/10 |
-| **Human** | ±8° / ±10% / ±10% | ~6-8/10 |
 
 ## Roadmap
 
